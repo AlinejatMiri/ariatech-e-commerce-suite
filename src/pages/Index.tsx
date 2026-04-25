@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Truck, Shield, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Truck, Shield, Headphones, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/products";
+import { useProducts, useCategories } from "@/hooks/useProductData";
 import heroImg1 from "@/assets/hero-1.jpg";
 import heroImg2 from "@/assets/hero-2.jpg";
 
@@ -15,6 +15,8 @@ const heroSlides = [
 
 const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { data: products = [] } = useProducts();
+  const { data: categories = [] } = useCategories();
   const bestSellers = products.filter(p => p.isBestSeller);
   const newArrivals = products.filter(p => p.isNew);
 

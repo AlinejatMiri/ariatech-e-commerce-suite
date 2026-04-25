@@ -1,9 +1,9 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { SlidersHorizontal, ChevronDown } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/products";
+import { useProducts, useProductsByCategory, useCategories } from "@/hooks/useProductData";
 
 type SortOption = "newest" | "price-asc" | "price-desc" | "rating";
 
@@ -14,10 +14,19 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const perPage = 8;
 
+  const { data: allProducts = [] } = useProducts();
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [slug, sort, selectedBrands, inStockOnly, priceRange]);
+  const { data: categoryProducts = [] } = useProductsByCategory(slug ?? "");
+  const { data: categories = [] } = useCategories();
+  const products = slug ? categoryProducts : allProducts;
   const category = slug ? categories.find(c => c.slug === slug) : null;
   const filteredProducts = useMemo(() => {
-    let result = slug ? products.filter(p => p.categorySlug === slug) : [...products];
+    let result = [...products];
     if (selectedBrands.length > 0) result = result.filter(p => selectedBrands.includes(p.brand));
     if (inStockOnly) result = result.filter(p => p.inStock);
     result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
@@ -29,12 +38,14 @@ const Products = () => {
       default: break;
     }
     return result;
-  }, [slug, sort, selectedBrands, inStockOnly, priceRange]);
+  }, [products, sort, selectedBrands, inStockOnly, priceRange]);
+
+  const totalPages = Math.ceil(filteredProducts.length / perPage);
+  const paginatedProducts = filteredProducts.slice((page - 1) * perPage, page * perPage);
 
   const brands = useMemo(() => {
-    const source = slug ? products.filter(p => p.categorySlug === slug) : products;
-    return [...new Set(source.map(p => p.brand))].sort();
-  }, [slug]);
+    return [...new Set(products.map(p => p.brand))].sort();
+  }, [products]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
@@ -120,10 +131,39 @@ const Products = () => {
 
           {/* Product grid */}
           <div className="flex-1">
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map(p => <ProductCard key={p.id} product={p} />)}
-              </div>
+            {paginatedProducts.length > 0 ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {paginatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="p-2 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${p === page ? "bg-primary text-primary-foreground" : "border border-border hover:bg-muted"}`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      className="p-2 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-20">
                 <p className="text-lg font-medium text-muted-foreground">No products found</p>

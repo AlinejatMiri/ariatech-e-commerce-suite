@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/data/products";
 import { motion } from "framer-motion";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
+  const { toast } = useToast();
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
@@ -48,7 +50,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             )}
           </div>
           <button
-            onClick={(e) => { e.preventDefault(); addItem(product); }}
+            onClick={(e) => { e.preventDefault(); addItem(product); toast({ title: "Added to cart", description: product.name }); }}
             className="p-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
             aria-label={`Add ${product.name} to cart`}
           >

@@ -1,11 +1,53 @@
 import { Link } from "react-router-dom";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from "lucide-react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { useCart } from "@/context/CartContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const Cart = () => {
   const { items, removeItem, updateQuantity, totalPrice, totalItems } = useCart();
+  const { toast } = useToast();
+  const [couponCode, setCouponCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const finalPrice = totalPrice - discount;
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    const { data, error } = await supabase
+      .from("discounts")
+      .select("*")
+      .eq("code", couponCode.trim().toUpperCase())
+      .eq("active", true)
+      .maybeSingle();
+    setCouponLoading(false);
+    if (error || !data) {
+      toast({ title: "Invalid coupon", description: "This coupon code doesn't exist or has expired.", variant: "destructive" });
+      return;
+    }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast({ title: "Coupon expired", variant: "destructive" });
+      return;
+    }
+    if (data.max_uses && data.used_count && data.used_count >= data.max_uses) {
+      toast({ title: "Coupon used up", variant: "destructive" });
+      return;
+    }
+    if (data.min_order_amount && totalPrice < Number(data.min_order_amount)) {
+      toast({ title: "Minimum order not met", description: `Minimum order is $${Number(data.min_order_amount).toLocaleString()}`, variant: "destructive" });
+      return;
+    }
+    const discountAmount = Math.round(totalPrice * Number(data.percentage) / 100 * 100) / 100;
+    setDiscount(discountAmount);
+    toast({ title: `Coupon applied!`, description: `${data.percentage}% off — you save $${discountAmount.toLocaleString()}` });
+  };
 
   if (items.length === 0) {
     return (
@@ -78,20 +120,40 @@ const Cart = () => {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>${totalPrice.toLocaleString()}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> Discount</span>
+                    <span>-${discount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className="text-sm" style={{ color: "hsl(var(--badge-new))" }}>Free</span>
                 </div>
               </div>
+              {/* Coupon */}
+              <div className="mt-3 space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Coupon code"
+                    value={couponCode}
+                    onChange={e => setCouponCode(e.target.value)}
+                    className="h-9 text-sm uppercase"
+                  />
+                  <Button variant="outline" size="sm" onClick={applyCoupon} disabled={couponLoading} className="shrink-0">
+                    Apply
+                  </Button>
+                </div>
+              </div>
               <div className="border-t border-border mt-4 pt-4">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${totalPrice.toLocaleString()}</span>
+                  <span>${finalPrice.toLocaleString()}</span>
                 </div>
               </div>
-              <button className="w-full mt-6 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors">
+              <Link to="/checkout" className="w-full mt-6 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center">
                 Proceed to Checkout
-              </button>
+              </Link>
               <Link to="/products" className="block text-center text-sm text-primary hover:underline mt-3">
                 Continue Shopping
               </Link>

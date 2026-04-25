@@ -1,19 +1,90 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
-import { ShoppingCart, Star, Check, Minus, Plus, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingCart, Star, Check, Minus, Plus, ChevronRight, Loader2, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
-import { products } from "@/data/products";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useProduct, useProducts } from "@/hooks/useProductData";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Review = Tables<"reviews"> & { profiles: { display_name: string | null } | null };
 
 const ProductDetail = () => {
   const { slug } = useParams();
-  const product = products.find(p => p.slug === slug);
+  const { data: product, isLoading: productLoading } = useProduct(slug ?? "");
+  const { data: allProducts = [] } = useProducts();
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"specs" | "description" | "reviews">("specs");
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    if (!product) return;
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      const { data } = await supabase
+        .from("reviews")
+        .select("*, profiles(display_name)")
+        .eq("product_id", product.id)
+        .order("created_at", { ascending: false });
+      setReviews((data as unknown as Review[]) ?? []);
+      setReviewsLoading(false);
+    };
+    fetchReviews();
+  }, [product]);
+
+  const handleSubmitReview = async () => {
+    if (!user || !product) return;
+    if (!reviewComment.trim()) {
+      toast({ title: "Please write a comment", variant: "destructive" });
+      return;
+    }
+    setSubmittingReview(true);
+    const { error } = await supabase.from("reviews").insert({
+      product_id: product.id,
+      user_id: user.id,
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+    });
+    setSubmittingReview(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Review submitted!" });
+      setReviewComment("");
+      setReviewRating(5);
+      // Refresh reviews
+      const { data } = await supabase
+        .from("reviews")
+        .select("*, profiles(display_name)")
+        .eq("product_id", product.id)
+        .order("created_at", { ascending: false });
+      setReviews((data as unknown as Review[]) ?? []);
+    }
+  };
+
+  if (productLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (
@@ -30,7 +101,7 @@ const ProductDetail = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
 
-  const related = products.filter(p => p.categorySlug === product.categorySlug && p.id !== product.id).slice(0, 4);
+  const related = allProducts.filter(p => p.categorySlug === product.categorySlug && p.id !== product.id).slice(0, 4);
 
   return (
     <Layout>
@@ -119,7 +190,7 @@ const ProductDetail = () => {
                 </button>
               </div>
               <button
-                onClick={() => addItem(product, quantity)}
+                onClick={() => { addItem(product, quantity); toast({ title: "Added to cart", description: `${quantity}× ${product.name}` }); }}
                 disabled={!product.inStock}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -157,7 +228,62 @@ const ProductDetail = () => {
               )}
 
               {activeTab === "reviews" && (
-                <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review this product!</p>
+                <div className="space-y-4">
+                  {/* Submit review */}
+                  {user ? (
+                    <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+                      <h4 className="text-sm font-semibold">Write a Review</h4>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map(v => (
+                          <button key={v} onClick={() => setReviewRating(v)} className="p-0.5">
+                            <Star className={`w-5 h-5 ${v <= reviewRating ? "star-color fill-current" : "text-muted-foreground/30"}`} />
+                          </button>
+                        ))}
+                        <span className="text-sm text-muted-foreground ml-2">{reviewRating}/5</span>
+                      </div>
+                      <Textarea
+                        placeholder="Share your experience with this product..."
+                        value={reviewComment}
+                        onChange={e => setReviewComment(e.target.value)}
+                        rows={3}
+                      />
+                      <Button onClick={handleSubmitReview} disabled={submittingReview} size="sm">
+                        {submittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                        Submit Review
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4">
+                      <Link to="/login" className="text-primary hover:underline">Sign in</Link> to write a review.
+                    </p>
+                  )}
+
+                  {/* Reviews list */}
+                  {reviewsLoading ? (
+                    <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+                  ) : reviews.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">No reviews yet. Be the first to review this product!</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {reviews.map(r => (
+                        <div key={r.id} className="border border-border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map(v => (
+                                  <Star key={v} className={`w-3.5 h-3.5 ${v <= r.rating ? "star-color fill-current" : "text-muted-foreground/30"}`} />
+                                ))}
+                              </div>
+                              <span className="text-sm font-medium">{r.profiles?.display_name || "User"}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
+                          </div>
+                          {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
