@@ -121,6 +121,9 @@ const Signup = () => {
               Sign In
             </Link>
           </p>
+          <p className="text-center text-sm text-muted-foreground mt-2">
+            <Link to="/" className="hover:underline">← Back to Home</Link>
+          </p>
         </CardContent>
       </Card>
     </div>
