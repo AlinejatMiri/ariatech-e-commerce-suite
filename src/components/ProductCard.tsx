@@ -4,8 +4,10 @@ import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/data/products";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const ProductCard = ({ product }: { product: Product }) => {
+  const { t } = useTranslation();
   const { addItem } = useCart();
   const { toast } = useToast();
   const discount = product.originalPrice
@@ -50,9 +52,9 @@ const ProductCard = ({ product }: { product: Product }) => {
             )}
           </div>
           <button
-            onClick={(e) => { e.preventDefault(); addItem(product); toast({ title: "Added to cart", description: product.name }); }}
+            onClick={(e) => { e.preventDefault(); addItem(product); toast({ title: t("common.addedToCart"), description: product.name }); }}
             className="p-2 sm:p-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-            aria-label={`Add ${product.name} to cart`}
+            aria-label={t("common.addToCart")}
           >
             <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>

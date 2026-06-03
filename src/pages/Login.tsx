@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
+  const { t } = useTranslation();
   const { signIn, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -24,11 +26,11 @@ const Login = () => {
     setLoading(false);
     if (error) {
       const desc = error.includes("Email not confirmed")
-        ? "Please check your email and click the confirmation link first."
+        ? t("auth.emailNotConfirmed")
         : error;
-      toast({ title: "Login failed", description: desc, variant: "destructive" });
+      toast({ title: t("auth.loginFailed"), description: desc, variant: "destructive" });
     } else {
-      toast({ title: "Welcome back!", description: "You've been logged in successfully." });
+      toast({ title: t("auth.welcomeBackMsg"), description: t("auth.loggedInSuccess") });
     }
   };
 
@@ -36,13 +38,13 @@ const Login = () => {
     <div className="container flex items-center justify-center py-20">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your AriaTech account</CardDescription>
+          <CardTitle className="text-2xl">{t("auth.welcomeBack")}</CardTitle>
+          <CardDescription>{t("auth.signInDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -58,9 +60,9 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                  Forgot password?
+                  {t("auth.forgotPassword")}
                 </Link>
               </div>
               <div className="relative">
@@ -78,17 +80,17 @@ const Login = () => {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Sign In
+              {t("common.signIn")}
             </Button>
           </form>
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Don't have an account?{" "}
+            {t("auth.dontHaveAccount")}{" "}
             <Link to="/signup" className="text-primary font-medium hover:underline">
-              Sign Up
+              {t("common.signUp")}
             </Link>
           </p>
           <p className="text-center text-sm text-muted-foreground mt-2">
-            <Link to="/" className="hover:underline">← Back to Home</Link>
+            <Link to="/" className="hover:underline">{t("common.backToHome")}</Link>
           </p>
         </CardContent>
       </Card>

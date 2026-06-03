@@ -5,18 +5,21 @@ import { useAuth } from "@/context/AuthContext";
 import { useSearchProducts } from "@/hooks/useProductData";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const navLinks = [
-  { label: "Home", to: "/" },
-  { label: "Laptops", to: "/category/laptops" },
-  { label: "Desktop PCs", to: "/category/desktops" },
-  { label: "Monitors", to: "/category/monitors" },
-  { label: "Components", to: "/category/components" },
-  { label: "Peripherals", to: "/category/peripherals" },
-  { label: "All Products", to: "/products" },
+  { labelKey: "common.home", to: "/" },
+  { labelKey: "nav.laptops", to: "/category/laptops" },
+  { labelKey: "nav.desktops", to: "/category/desktops" },
+  { labelKey: "nav.monitors", to: "/category/monitors" },
+  { labelKey: "nav.components", to: "/category/components" },
+  { labelKey: "nav.peripherals", to: "/category/peripherals" },
+  { labelKey: "common.allProducts", to: "/products" },
 ];
 
 const Header = () => {
+  const { t } = useTranslation();
   const { totalItems } = useCart();
   const { user, profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
@@ -74,7 +77,7 @@ const Header = () => {
             <form onSubmit={handleSearch} className="relative w-full">
               <input
                 type="text"
-                placeholder="Search products, brands, categories..."
+                placeholder={t("header.searchPlaceholder")}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => debouncedQuery.trim() && suggestions.length > 0 && setShowSuggestions(true)}
@@ -104,7 +107,7 @@ const Header = () => {
                     onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}
                     className="block px-4 py-2.5 text-sm text-primary font-medium hover:bg-muted transition-colors border-t border-border"
                   >
-                    View all results for "{searchQuery}"
+                    {t("header.viewAllResults", { query: searchQuery })}
                   </Link>
                 </div>
               )}
@@ -125,6 +128,8 @@ const Header = () => {
               )}
             </Link>
 
+            <LanguageSwitcher />
+
             {user ? (
               <div className="relative">
                 <button
@@ -144,26 +149,26 @@ const Header = () => {
                       className="absolute right-0 top-full mt-1 w-56 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50"
                     >
                       <div className="px-4 py-3 border-b border-border">
-                        <p className="text-sm font-medium">{profile?.display_name || "User"}</p>
+                        <p className="text-sm font-medium">{profile?.display_name || t("common.myAccount")}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
                       <div className="py-1">
                         <Link to="/account" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors">
-                          <User className="w-4 h-4" /> My Account
+                          <User className="w-4 h-4" /> {t("common.myAccount")}
                         </Link>
                         <Link to="/account" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors">
-                          <Heart className="w-4 h-4" /> Wishlist
+                          <Heart className="w-4 h-4" /> {t("common.wishlist")}
                         </Link>
                         <Link to="/account" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors">
-                          <ShoppingCart className="w-4 h-4" /> Orders
+                          <ShoppingCart className="w-4 h-4" /> {t("common.orders")}
                         </Link>
                         {isAdmin && (
                           <Link to="/admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-muted transition-colors">
-                            <Shield className="w-4 h-4" /> Admin Panel
+                            <Shield className="w-4 h-4" /> {t("common.adminPanel")}
                           </Link>
                         )}
                         <button onClick={handleSignOut} className="flex items-center gap-2 px-4 py-2 text-sm w-full text-destructive hover:bg-muted transition-colors">
-                          <LogOut className="w-4 h-4" /> Sign Out
+                          <LogOut className="w-4 h-4" /> {t("common.signOut")}
                         </button>
                       </div>
                     </motion.div>
@@ -190,7 +195,7 @@ const Header = () => {
                 <form onSubmit={handleSearch} className="relative w-full">
                   <input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder={t("header.searchPlaceholderMobile")}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="w-full h-10 px-4 rounded-lg bg-foreground/10 text-header-fg placeholder:text-header-fg/50 border-0 outline-none focus:ring-2 focus:ring-primary/50 text-sm"
@@ -215,7 +220,7 @@ const Header = () => {
               to={link.to}
               className="px-3 py-1.5 text-sm font-medium text-foreground/70 hover:text-primary rounded-md hover:bg-primary/5 transition-colors"
             >
-              {link.label}
+              {t(link.labelKey)}
             </Link>
           ))}
         </div>
@@ -238,29 +243,29 @@ const Header = () => {
                   onClick={() => setMobileOpen(false)}
                   className="px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary rounded-lg hover:bg-primary/5 transition-colors"
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
               <Link to="/blog" onClick={() => setMobileOpen(false)} className="px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary rounded-lg hover:bg-primary/5 transition-colors">
-                Blog
+                {t("common.blog")}
               </Link>
               <Link to="/contact" onClick={() => setMobileOpen(false)} className="px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary rounded-lg hover:bg-primary/5 transition-colors">
-                Contact
+                {t("common.contact")}
               </Link>
               {user ? (
                 <>
                   <Link to="/account" onClick={() => setMobileOpen(false)} className="px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary rounded-lg hover:bg-primary/5 transition-colors">
-                    My Account
+                    {t("common.myAccount")}
                   </Link>
                   {isAdmin && (
                     <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 rounded-lg transition-colors">
-                      Admin Panel
+                      {t("common.adminPanel")}
                     </Link>
                   )}
                 </>
               ) : (
                 <Link to="/login" onClick={() => setMobileOpen(false)} className="px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 rounded-lg transition-colors">
-                  Sign In
+                  {t("common.signIn")}
                 </Link>
               )}
             </nav>

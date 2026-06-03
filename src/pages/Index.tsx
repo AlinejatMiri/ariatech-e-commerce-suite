@@ -5,16 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories } from "@/hooks/useProductData";
+import { useTranslation } from "react-i18next";
 import heroImg1 from "@/assets/hero-1.jpg";
 import heroImg2 from "@/assets/hero-2.jpg";
 
-const heroSlides = [
-  { image: heroImg1, title: "Next-Gen Gaming PCs", subtitle: "Built for performance. Designed for you.", cta: "Shop Gaming PCs", link: "/category/desktops" },
-  { image: heroImg2, title: "Laptops That Move With You", subtitle: "Power meets portability. Explore our latest collection.", cta: "Browse Laptops", link: "/category/laptops" },
-];
-
 const Index = () => {
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const heroSlides = [
+    { image: heroImg1, title: t("hero.slide1Title"), subtitle: t("hero.slide1Subtitle"), cta: t("hero.slide1Cta"), link: "/category/desktops" },
+    { image: heroImg2, title: t("hero.slide2Title"), subtitle: t("hero.slide2Subtitle"), cta: t("hero.slide2Cta"), link: "/category/laptops" },
+  ];
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const bestSellers = products.filter(p => p.isBestSeller);
@@ -84,9 +85,9 @@ const Index = () => {
       <section className="border-b border-border bg-card">
         <div className="container py-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { icon: Truck, label: "Free Shipping", desc: "On orders over $50" },
-            { icon: Shield, label: "2-Year Warranty", desc: "On all products" },
-            { icon: Headphones, label: "24/7 Support", desc: "Expert tech help" },
+            { icon: Truck, label: t("features.freeShipping"), desc: t("features.freeShippingDesc") },
+            { icon: Shield, label: t("features.warranty"), desc: t("features.warrantyDesc") },
+            { icon: Headphones, label: t("features.support"), desc: t("features.supportDesc") },
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex items-center gap-3">
               <div className="p-2.5 rounded-lg bg-primary/10">
@@ -103,7 +104,7 @@ const Index = () => {
 
       {/* Categories */}
       <section className="container py-12">
-        <h2 className="text-2xl font-bold mb-6">Shop by Category</h2>
+        <h2 className="text-2xl font-bold mb-6">{t("home.shopByCategory")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           {categories.map(cat => (
             <Link
@@ -122,9 +123,9 @@ const Index = () => {
       {/* Best Sellers */}
       <section className="container pb-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Best Sellers</h2>
+          <h2 className="text-2xl font-bold">{t("home.bestSellers")}</h2>
           <Link to="/products" className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
-            View All <ArrowRight className="w-4 h-4" />
+            {t("common.viewAll")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -136,11 +137,11 @@ const Index = () => {
       <section className="container pb-12">
         <div className="gradient-hero rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-2">Build Your Dream PC</h3>
-            <p className="text-primary-foreground/80">Custom configurations. Expert assembly. Lifetime support.</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-2">{t("home.promoTitle")}</h3>
+            <p className="text-primary-foreground/80">{t("home.promoDesc")}</p>
           </div>
           <Link to="/category/desktops" className="px-6 py-3 rounded-lg bg-primary-foreground text-primary font-semibold hover:bg-primary-foreground/90 transition-colors shrink-0">
-            Configure Now
+            {t("home.promoCta")}
           </Link>
         </div>
       </section>
@@ -148,9 +149,9 @@ const Index = () => {
       {/* New Arrivals */}
       <section className="container pb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">New Arrivals</h2>
+          <h2 className="text-2xl font-bold">{t("home.newArrivals")}</h2>
           <Link to="/products" className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
-            View All <ArrowRight className="w-4 h-4" />
+            {t("common.viewAll")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

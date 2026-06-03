@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -152,4 +152,13 @@
   .text-header-fg {
     color: hsl(var(--header-fg));
   }
+}
+
+/* RTL / Persian support */
+[dir="rtl"] {
+  font-family: 'Vazirmatn', 'Inter', sans-serif;
+}
+
+[dir="rtl"] .gradient-hero {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(220 80% 30%) 100%);
 }
